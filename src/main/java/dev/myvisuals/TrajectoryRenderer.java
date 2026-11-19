@@ -12,6 +12,7 @@ import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.BowItem;
 import net.minecraft.item.CrossbowItem;
 import net.minecraft.item.Item;
@@ -22,6 +23,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
@@ -29,6 +31,7 @@ import org.joml.Matrix4f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public final class TrajectoryRenderer {
 	private TrajectoryRenderer() {}
@@ -63,6 +66,24 @@ public final class TrajectoryRenderer {
 		return null;
 	}
 
+	/** Ближайшая точка попадания отрезка from→to в существо, либо null. */
+	private static Vec3d entityHit(List<LivingEntity> entities, Vec3d from, Vec3d to) {
+		Vec3d best = null;
+		double bestDist = Double.MAX_VALUE;
+		for (LivingEntity e : entities) {
+			Box box = e.getBoundingBox().expand(0.3);
+			Optional<Vec3d> hit = box.raycast(from, to);
+			if (hit.isPresent()) {
+				double d = from.squaredDistanceTo(hit.get());
+				if (d < bestDist) {
+					bestDist = d;
+					best = hit.get();
+				}
+			}
+		}
+		return best;
+	}
+
 	public static void render(WorldRenderContext ctx) {
 		if (!Config.trajectory) return;
 
@@ -81,11 +102,18 @@ public final class TrajectoryRenderer {
 		Vec3d vel = Vec3d.fromPolar(player.getPitch(tickDelta) + params.pitchOffset(), player.getYaw(tickDelta))
 				.multiply(params.speed());
 
+		List<LivingEntity> entities = world.getEntitiesByClass(
+				LivingEntity.class,
+				player.getBoundingBox().expand(100),
+				e -> e != player && e.isAlive() && !e.isSpectator());
+
 		// --- симуляция полёта мелкими шагами, чтобы кривая была плавной ---
 		final double dt = 1.0 / SUBSTEPS;
 		List<Vec3d> points = new ArrayList<>();
 		points.add(pos);
-		BlockHitResult landing = null;
+		Vec3d landPos = null;
+		Direction landFace = Direction.UP;
+		boolean hitsEntity = false;
 
 		for (int i = 0; i < 120 * SUBSTEPS; i++) {
 			Vec3d next = pos.add(vel.multiply(dt));
@@ -94,9 +122,20 @@ public final class TrajectoryRenderer {
 					RaycastContext.ShapeType.COLLIDER,
 					RaycastContext.FluidHandling.NONE,
 					player));
-			if (hit.getType() != HitResult.Type.MISS) {
-				landing = hit;
-				points.add(hit.getPos());
+			boolean blockHit = hit.getType() != HitResult.Type.MISS;
+			Vec3d segmentEnd = blockHit ? hit.getPos() : next;
+
+			Vec3d eHit = entityHit(entities, pos, segmentEnd);
+			if (eHit != null) {
+				landPos = eHit;
+				hitsEntity = true;
+				points.add(eHit);
+				break;
+			}
+			if (blockHit) {
+				landPos = hit.getPos();
+				landFace = hit.getSide();
+				points.add(landPos);
 				break;
 			}
 			points.add(next);
@@ -119,6 +158,11 @@ public final class TrajectoryRenderer {
 		}
 		if (rel.size() < 2) return;
 
+		// зелёный обычно, красный если траектория наведена на существо
+		int cr = hitsEntity ? 255 : 70;
+		int cg = hitsEntity ? 60 : 255;
+		int cb = hitsEntity ? 60 : 110;
+
 		Matrix4f m = matrices.peek().getPositionMatrix();
 
 		RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
@@ -128,7 +172,7 @@ public final class TrajectoryRenderer {
 		RenderSystem.enableDepthTest();
 		RenderSystem.depthMask(false);
 
-		// --- полупрозрачная зелёная лента ---
+		// --- полупрозрачная лента ---
 		BufferBuilder strip = Tessellator.getInstance()
 				.begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR);
 		for (int i = 0; i < rel.size(); i++) {
@@ -144,17 +188,16 @@ public final class TrajectoryRenderer {
 
 			int alpha = (int) Math.min(125, 35 + 22 * Math.max(0, r.length() - 1.5));
 			strip.vertex(m, (float) (r.x + side.x), (float) (r.y + side.y), (float) (r.z + side.z))
-					.color(70, 255, 110, alpha);
+					.color(cr, cg, cb, alpha);
 			strip.vertex(m, (float) (r.x - side.x), (float) (r.y - side.y), (float) (r.z - side.z))
-					.color(70, 255, 110, alpha);
+					.color(cr, cg, cb, alpha);
 		}
 		BufferRenderer.drawWithGlobalProgram(strip.end());
 
 		// --- чёрный кружок в месте падения ---
-		if (landing != null) {
-			Direction face = landing.getSide();
-			Vec3d n = new Vec3d(face.getOffsetX(), face.getOffsetY(), face.getOffsetZ());
-			Vec3d c = landing.getPos().subtract(cam).add(n.multiply(0.02));
+		if (landPos != null) {
+			Vec3d n = new Vec3d(landFace.getOffsetX(), landFace.getOffsetY(), landFace.getOffsetZ());
+			Vec3d c = landPos.subtract(cam).add(n.multiply(0.02));
 			Vec3d ref = Math.abs(n.y) > 0.9 ? new Vec3d(1, 0, 0) : new Vec3d(0, 1, 0);
 			Vec3d u = n.crossProduct(ref).normalize();
 			Vec3d v = n.crossProduct(u);
@@ -187,12 +230,12 @@ public final class TrajectoryRenderer {
 						(float) (c.x + (u.x * cs + v.x * sn) * r1),
 						(float) (c.y + (u.y * cs + v.y * sn) * r1),
 						(float) (c.z + (u.z * cs + v.z * sn) * r1))
-						.color(70, 255, 110, 170);
+						.color(cr, cg, cb, 170);
 				ring.vertex(m,
 						(float) (c.x + (u.x * cs + v.x * sn) * r2),
 						(float) (c.y + (u.y * cs + v.y * sn) * r2),
 						(float) (c.z + (u.z * cs + v.z * sn) * r2))
-						.color(70, 255, 110, 170);
+						.color(cr, cg, cb, 170);
 			}
 			BufferRenderer.drawWithGlobalProgram(ring.end());
 		}

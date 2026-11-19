@@ -5,6 +5,7 @@ public final class Config {
 
 	public static boolean trajectory = true;
 	public static boolean bridge = false;
+	public static boolean autoApple = false;
 	public static Weather weather = Weather.VANILLA;
 
 	public enum Weather {

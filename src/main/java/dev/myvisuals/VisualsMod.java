@@ -27,6 +27,7 @@ public class VisualsMod implements ClientModInitializer {
 				}
 			}
 			BridgeAssist.tick(client);
+			AutoApple.tick(client);
 			FallingItems.tick(client);
 		});
 
