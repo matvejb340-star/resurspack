@@ -20,6 +20,8 @@ public class VisualsMod implements ClientModInitializer {
 				"category.myvisuals"
 		));
 
+		KillAnimations.register();
+
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (menuKey.wasPressed()) {
 				if (client.currentScreen == null) {
@@ -29,8 +31,10 @@ public class VisualsMod implements ClientModInitializer {
 			BridgeAssist.tick(client);
 			AutoApple.tick(client);
 			FallingItems.tick(client);
+			KillAnimations.tick(client);
 		});
 
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(TrajectoryRenderer::render);
+		WorldRenderEvents.AFTER_TRANSLUCENT.register(KillAnimations::render);
 	}
 }

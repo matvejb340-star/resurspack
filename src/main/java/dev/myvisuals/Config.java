@@ -8,6 +8,7 @@ public final class Config {
 	public static boolean autoApple = false;
 	public static boolean autoApplePlus = false;
 	public static Weather weather = Weather.VANILLA;
+	public static KillAnim killAnim = KillAnim.OFF;
 
 	// --- настройки рук ---
 	public static double mainScale = 1.0;
@@ -49,6 +50,24 @@ public final class Config {
 
 		public Weather next() {
 			Weather[] all = values();
+			return all[(ordinal() + 1) % all.length];
+		}
+	}
+
+	public enum KillAnim {
+		OFF("Выключено"),
+		KNEEL("На колено"),
+		TOILET("Туалет с ракетой"),
+		SOUL("Душа");
+
+		public final String label;
+
+		KillAnim(String label) {
+			this.label = label;
+		}
+
+		public KillAnim next() {
+			KillAnim[] all = values();
 			return all[(ordinal() + 1) % all.length];
 		}
 	}
