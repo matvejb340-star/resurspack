@@ -23,6 +23,10 @@ public class VisualsScreen extends Screen {
 		return Text.literal("Авто-яблоко: " + (Config.autoApple ? "ВКЛ" : "ВЫКЛ"));
 	}
 
+	private static Text applePlusLabel() {
+		return Text.literal("Авто-яблоко +++: " + (Config.autoApplePlus ? "ВКЛ" : "ВЫКЛ"));
+	}
+
 	private static Text weatherLabel() {
 		return Text.literal("Погода: " + Config.weather.label);
 	}
@@ -32,7 +36,7 @@ public class VisualsScreen extends Screen {
 		int w = 220;
 		int h = 20;
 		int x = this.width / 2 - w / 2;
-		int y = this.height / 2 - 58;
+		int y = this.height / 2 - 84;
 
 		addDrawableChild(ButtonWidget.builder(trajectoryLabel(), b -> {
 			Config.trajectory = !Config.trajectory;
@@ -49,20 +53,29 @@ public class VisualsScreen extends Screen {
 			b.setMessage(appleLabel());
 		}).dimensions(x, y + 52, w, h).build());
 
+		addDrawableChild(ButtonWidget.builder(applePlusLabel(), b -> {
+			Config.autoApplePlus = !Config.autoApplePlus;
+			b.setMessage(applePlusLabel());
+		}).dimensions(x, y + 78, w, h).build());
+
 		addDrawableChild(ButtonWidget.builder(weatherLabel(), b -> {
 			Config.weather = Config.weather.next();
 			b.setMessage(weatherLabel());
-		}).dimensions(x, y + 78, w, h).build());
+		}).dimensions(x, y + 104, w, h).build());
+
+		addDrawableChild(ButtonWidget.builder(Text.literal("Руки и анимация меча..."), b -> {
+			if (this.client != null) this.client.setScreen(new HandsScreen(this));
+		}).dimensions(x, y + 130, w, h).build());
 
 		addDrawableChild(ButtonWidget.builder(Text.literal("Закрыть"), b -> close())
-				.dimensions(x, y + 110, w, h).build());
+				.dimensions(x, y + 162, w, h).build());
 	}
 
 	@Override
 	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
 		super.render(context, mouseX, mouseY, delta);
 		context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("My Visuals"),
-				this.width / 2, this.height / 2 - 82, 0xFFFFFFFF);
+				this.width / 2, this.height / 2 - 100, 0xFFFFFFFF);
 	}
 
 	@Override

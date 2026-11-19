@@ -7,9 +7,12 @@ import net.minecraft.util.Hand;
 
 /**
  * Авто-яблоко: если в хотбаре (9 слотов) лежит золотое яблоко и здоровья стало
- * половина или меньше, мод переключает слот на яблоко и один раз его съедает,
- * потом возвращает прежний слот. Снова сработает, только когда здоровье
- * поднимется выше половины.
+ * половина или меньше, мод переключает слот на яблоко и один раз его съедает.
+ *
+ * Обычный режим: после еды возвращается прежний слот.
+ * Режим +++: рука остаётся на слоте с яблоком.
+ *
+ * Снова сработает, только когда здоровье поднимется выше половины.
  */
 public final class AutoApple {
 	private AutoApple() {}
@@ -17,6 +20,7 @@ public final class AutoApple {
 	private static boolean eating = false;
 	private static boolean armed = true;
 	private static boolean started = false;
+	private static boolean keepSlot = false;
 	private static int prevSlot = -1;
 	private static int appleSlot = -1;
 	private static int ticks = 0;
@@ -24,7 +28,7 @@ public final class AutoApple {
 	private static void stop(MinecraftClient mc) {
 		mc.options.useKey.setPressed(false);
 		ClientPlayerEntity p = mc.player;
-		if (p != null && prevSlot >= 0 && p.getInventory().selectedSlot == appleSlot) {
+		if (!keepSlot && p != null && prevSlot >= 0 && p.getInventory().selectedSlot == appleSlot) {
 			p.getInventory().selectedSlot = prevSlot;
 		}
 		eating = false;
@@ -36,8 +40,9 @@ public final class AutoApple {
 
 	public static void tick(MinecraftClient mc) {
 		ClientPlayerEntity p = mc.player;
+		boolean enabled = Config.autoApple || Config.autoApplePlus;
 
-		if (p == null || mc.interactionManager == null || !Config.autoApple) {
+		if (p == null || mc.interactionManager == null || !enabled) {
 			if (eating) stop(mc);
 			armed = true;
 			return;
@@ -74,6 +79,7 @@ public final class AutoApple {
 		}
 		if (slot < 0) return;
 
+		keepSlot = Config.autoApplePlus;
 		prevSlot = p.getInventory().selectedSlot;
 		appleSlot = slot;
 		p.getInventory().selectedSlot = slot;
