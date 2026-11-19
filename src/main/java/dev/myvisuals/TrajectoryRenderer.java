@@ -22,6 +22,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import org.joml.Matrix4f;
@@ -31,6 +32,9 @@ import java.util.List;
 
 public final class TrajectoryRenderer {
 	private TrajectoryRenderer() {}
+
+	private static final int SUBSTEPS = 4;
+	private static final double RIBBON_HALF_WIDTH = 0.09;
 
 	private record Params(double speed, double gravity, double drag, float pitchOffset) {}
 
@@ -77,68 +81,124 @@ public final class TrajectoryRenderer {
 		Vec3d vel = Vec3d.fromPolar(player.getPitch(tickDelta) + params.pitchOffset(), player.getYaw(tickDelta))
 				.multiply(params.speed());
 
+		// --- симуляция полёта мелкими шагами, чтобы кривая была плавной ---
+		final double dt = 1.0 / SUBSTEPS;
 		List<Vec3d> points = new ArrayList<>();
 		points.add(pos);
-		Vec3d landing = null;
+		BlockHitResult landing = null;
 
-		for (int i = 0; i < 300; i++) {
-			Vec3d next = pos.add(vel);
+		for (int i = 0; i < 120 * SUBSTEPS; i++) {
+			Vec3d next = pos.add(vel.multiply(dt));
 			BlockHitResult hit = world.raycast(new RaycastContext(
 					pos, next,
 					RaycastContext.ShapeType.COLLIDER,
 					RaycastContext.FluidHandling.NONE,
 					player));
 			if (hit.getType() != HitResult.Type.MISS) {
-				landing = hit.getPos();
-				points.add(landing);
+				landing = hit;
+				points.add(hit.getPos());
 				break;
 			}
 			points.add(next);
 			pos = next;
 
 			boolean inWater = world.getFluidState(BlockPos.ofFloored(pos)).isIn(FluidTags.WATER);
-			vel = vel.multiply(inWater ? 0.6 : params.drag()).subtract(0, params.gravity(), 0);
+			double drag = Math.pow(inWater ? 0.6 : params.drag(), dt);
+			vel = vel.multiply(drag).subtract(0, params.gravity() * dt, 0);
 
 			if (pos.y < world.getBottomY() - 10) break;
 		}
 
-		if (points.size() < 2) return;
-
 		Vec3d cam = ctx.camera().getPos();
+
+		// точки относительно камеры; начало у самого лица пропускаем
+		List<Vec3d> rel = new ArrayList<>();
+		for (Vec3d pt : points) {
+			Vec3d r = pt.subtract(cam);
+			if (!rel.isEmpty() || r.lengthSquared() > 1.5 * 1.5) rel.add(r);
+		}
+		if (rel.size() < 2) return;
+
 		Matrix4f m = matrices.peek().getPositionMatrix();
 
 		RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
-		RenderSystem.disableDepthTest();
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
-		RenderSystem.lineWidth(3.0f);
-
-		BufferBuilder line = Tessellator.getInstance()
-				.begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
-		for (Vec3d pt : points) {
-			line.vertex(m, (float) (pt.x - cam.x), (float) (pt.y - cam.y), (float) (pt.z - cam.z))
-					.color(80, 255, 120, 255);
-		}
-		BufferRenderer.drawWithGlobalProgram(line.end());
-
-		if (landing != null) {
-			float s = 0.3f;
-			float cx = (float) (landing.x - cam.x);
-			float cy = (float) (landing.y - cam.y);
-			float cz = (float) (landing.z - cam.z);
-			BufferBuilder cross = Tessellator.getInstance()
-					.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
-			cross.vertex(m, cx - s, cy, cz).color(255, 80, 80, 255);
-			cross.vertex(m, cx + s, cy, cz).color(255, 80, 80, 255);
-			cross.vertex(m, cx, cy - s, cz).color(255, 80, 80, 255);
-			cross.vertex(m, cx, cy + s, cz).color(255, 80, 80, 255);
-			cross.vertex(m, cx, cy, cz - s).color(255, 80, 80, 255);
-			cross.vertex(m, cx, cy, cz + s).color(255, 80, 80, 255);
-			BufferRenderer.drawWithGlobalProgram(cross.end());
-		}
-
-		RenderSystem.lineWidth(1.0f);
+		RenderSystem.disableCull();
 		RenderSystem.enableDepthTest();
+		RenderSystem.depthMask(false);
+
+		// --- полупрозрачная зелёная лента ---
+		BufferBuilder strip = Tessellator.getInstance()
+				.begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR);
+		for (int i = 0; i < rel.size(); i++) {
+			Vec3d r = rel.get(i);
+			Vec3d dir;
+			if (i == 0) dir = rel.get(1).subtract(r);
+			else if (i == rel.size() - 1) dir = r.subtract(rel.get(i - 1));
+			else dir = rel.get(i + 1).subtract(rel.get(i - 1));
+
+			Vec3d side = dir.crossProduct(r);
+			if (side.lengthSquared() < 1.0E-8) side = new Vec3d(0, 1, 0);
+			side = side.normalize().multiply(RIBBON_HALF_WIDTH);
+
+			int alpha = (int) Math.min(125, 35 + 22 * Math.max(0, r.length() - 1.5));
+			strip.vertex(m, (float) (r.x + side.x), (float) (r.y + side.y), (float) (r.z + side.z))
+					.color(70, 255, 110, alpha);
+			strip.vertex(m, (float) (r.x - side.x), (float) (r.y - side.y), (float) (r.z - side.z))
+					.color(70, 255, 110, alpha);
+		}
+		BufferRenderer.drawWithGlobalProgram(strip.end());
+
+		// --- чёрный кружок в месте падения ---
+		if (landing != null) {
+			Direction face = landing.getSide();
+			Vec3d n = new Vec3d(face.getOffsetX(), face.getOffsetY(), face.getOffsetZ());
+			Vec3d c = landing.getPos().subtract(cam).add(n.multiply(0.02));
+			Vec3d ref = Math.abs(n.y) > 0.9 ? new Vec3d(1, 0, 0) : new Vec3d(0, 1, 0);
+			Vec3d u = n.crossProduct(ref).normalize();
+			Vec3d v = n.crossProduct(u);
+
+			final int seg = 28;
+
+			BufferBuilder disc = Tessellator.getInstance()
+					.begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+			disc.vertex(m, (float) c.x, (float) c.y, (float) c.z).color(0, 0, 0, 200);
+			for (int i = 0; i <= seg; i++) {
+				double a = 2 * Math.PI * i / seg;
+				double r = 0.33;
+				disc.vertex(m,
+						(float) (c.x + (u.x * Math.cos(a) + v.x * Math.sin(a)) * r),
+						(float) (c.y + (u.y * Math.cos(a) + v.y * Math.sin(a)) * r),
+						(float) (c.z + (u.z * Math.cos(a) + v.z * Math.sin(a)) * r))
+						.color(0, 0, 0, 200);
+			}
+			BufferRenderer.drawWithGlobalProgram(disc.end());
+
+			BufferBuilder ring = Tessellator.getInstance()
+					.begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR);
+			for (int i = 0; i <= seg; i++) {
+				double a = 2 * Math.PI * i / seg;
+				double cs = Math.cos(a);
+				double sn = Math.sin(a);
+				double r1 = 0.36;
+				double r2 = 0.43;
+				ring.vertex(m,
+						(float) (c.x + (u.x * cs + v.x * sn) * r1),
+						(float) (c.y + (u.y * cs + v.y * sn) * r1),
+						(float) (c.z + (u.z * cs + v.z * sn) * r1))
+						.color(70, 255, 110, 170);
+				ring.vertex(m,
+						(float) (c.x + (u.x * cs + v.x * sn) * r2),
+						(float) (c.y + (u.y * cs + v.y * sn) * r2),
+						(float) (c.z + (u.z * cs + v.z * sn) * r2))
+						.color(70, 255, 110, 170);
+			}
+			BufferRenderer.drawWithGlobalProgram(ring.end());
+		}
+
+		RenderSystem.depthMask(true);
+		RenderSystem.enableCull();
 		RenderSystem.disableBlend();
 	}
 }

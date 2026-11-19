@@ -14,8 +14,10 @@ public abstract class WorldMixin {
 	private void myvisuals$rain(float delta, CallbackInfoReturnable<Float> cir) {
 		if (!((Object) this instanceof ClientWorld)) return;
 		switch (Config.weather) {
-			case CLEAR -> cir.setReturnValue(0.0f);
-			case RAIN, SNOW, THUNDER -> cir.setReturnValue(1.0f);
+			case CLEAR, TOTEMS, SWORDS -> cir.setReturnValue(0.0f);
+			// небольшая сила, чтобы дождь и снег не закрывали обзор
+			case RAIN, SNOW -> cir.setReturnValue(0.4f);
+			case THUNDER -> cir.setReturnValue(0.6f);
 			default -> {}
 		}
 	}
@@ -24,7 +26,7 @@ public abstract class WorldMixin {
 	private void myvisuals$thunder(float delta, CallbackInfoReturnable<Float> cir) {
 		if (!((Object) this instanceof ClientWorld)) return;
 		switch (Config.weather) {
-			case CLEAR, RAIN, SNOW -> cir.setReturnValue(0.0f);
+			case CLEAR, RAIN, SNOW, TOTEMS, SWORDS -> cir.setReturnValue(0.0f);
 			case THUNDER -> cir.setReturnValue(1.0f);
 			default -> {}
 		}

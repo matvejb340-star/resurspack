@@ -12,7 +12,9 @@ public final class Config {
 		CLEAR("Ясно"),
 		RAIN("Дождь"),
 		SNOW("Снег"),
-		THUNDER("Гроза");
+		THUNDER("Гроза"),
+		TOTEMS("Дождь из тотемов"),
+		SWORDS("Дождь из мечей");
 
 		public final String label;
 

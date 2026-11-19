@@ -27,6 +27,7 @@ public class VisualsMod implements ClientModInitializer {
 				}
 			}
 			BridgeAssist.tick(client);
+			FallingItems.tick(client);
 		});
 
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(TrajectoryRenderer::render);
