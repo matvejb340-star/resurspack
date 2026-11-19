@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "myvisuals",
+  "version": "${version}",
+  "name": "My Visuals",
+  "description": "Траектория стрел и перлов, помощь в строительстве, своя погода.",
+  "authors": ["me"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["dev.myvisuals.VisualsMod"]
+  },
+  "mixins": ["myvisuals.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.16.9",
+    "minecraft": "~1.21.4",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

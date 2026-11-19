@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "dev.myvisuals.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "BiomeMixin",
+    "WorldMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
