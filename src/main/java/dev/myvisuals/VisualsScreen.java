@@ -86,16 +86,6 @@ public class VisualsScreen extends Screen {
 				() -> Config.radar = !Config.radar,
 				"Нажми, чтобы включить или выключить"));
 
-		entries.add(new Entry(22, new ItemStack(Items.MUSIC_DISC_CAT), "Музыка",
-				null,
-				() -> MusicPlayer.current() != null && MusicPlayer.isPlaying()
-						? "Играет: " + MusicPlayer.displayName(MusicPlayer.current())
-						: "Сейчас тишина",
-				() -> {
-					if (this.client != null) this.client.setScreen(new MusicScreen(this));
-				},
-				"Нажми, чтобы открыть"));
-
 		panelW = COLS * (SLOT + GAP) - GAP + PAD * 2;
 		panelH = ROWS * (SLOT + GAP) - GAP + PAD * 2;
 		px = (this.width - panelW) / 2;
