@@ -11,23 +11,21 @@ base {
 }
 
 repositories {
-	// Добавлено для скачивания библиотек вроде JLayer
-	mavenCentral()
+    mavenCentral()
+    // Добавляем репозиторий JitPack, который гарантированно находит эту библиотеку
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
-	// To change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	// Fabric API is optional, but most mods use it.
-	// modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-
-	// Библиотека для воспроизведения музыки (исправляет ошибку package javazoom.jl.decoder does not exist)
-	implementation 'javazoom:jlayer:1.0.1'
-	include 'javazoom:jlayer:1.0.1'
+    // Исправленный путь для подключения JLayer через JitPack
+    implementation 'com.github.layervibe:jlayer:1.0.1'
+    include 'com.github.layervibe:jlayer:1.0.1'
 }
+
 
 processResources {
 	inputs.property 'version', project.version
