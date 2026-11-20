@@ -71,15 +71,30 @@ public class VisualsScreen extends Screen {
 
 		entries.add(new Entry(15, new ItemStack(Items.WATER_BUCKET), "Погода",
 				() -> Config.weather != Config.Weather.VANILLA,
-				() -> Config.weather.label,
+				() -> "Режим: " + Config.weather.label,
 				() -> Config.weather = Config.weather.next(),
 				"Нажми, чтобы сменить погоду"));
 
 		entries.add(new Entry(20, new ItemStack(Items.SKELETON_SKULL), "Анимация убийства",
 				() -> Config.killAnim != Config.KillAnim.OFF,
-				() -> Config.killAnim.label,
+				() -> "Режим: " + Config.killAnim.label,
 				() -> Config.killAnim = Config.killAnim.next(),
 				"Нажми, чтобы сменить анимацию"));
+
+		entries.add(new Entry(11, new ItemStack(Items.COMPASS), "Радар и предупреждение",
+				() -> Config.radar, null,
+				() -> Config.radar = !Config.radar,
+				"Нажми, чтобы включить или выключить"));
+
+		entries.add(new Entry(22, new ItemStack(Items.MUSIC_DISC_CAT), "Музыка",
+				null,
+				() -> MusicPlayer.current() != null && MusicPlayer.isPlaying()
+						? "Играет: " + MusicPlayer.displayName(MusicPlayer.current())
+						: "Сейчас тишина",
+				() -> {
+					if (this.client != null) this.client.setScreen(new MusicScreen(this));
+				},
+				"Нажми, чтобы открыть"));
 
 		panelW = COLS * (SLOT + GAP) - GAP + PAD * 2;
 		panelH = ROWS * (SLOT + GAP) - GAP + PAD * 2;
@@ -150,7 +165,7 @@ public class VisualsScreen extends Screen {
 			List<Text> lines = new ArrayList<>();
 			lines.add(Text.literal(hovered.name()).formatted(Formatting.WHITE));
 			if (hovered.mode() != null) {
-				lines.add(Text.literal("Режим: " + hovered.mode().get()).formatted(Formatting.YELLOW));
+				lines.add(Text.literal(hovered.mode().get()).formatted(Formatting.YELLOW));
 			}
 			if (hovered.on() != null) {
 				if (hovered.on().getAsBoolean()) {

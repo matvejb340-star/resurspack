@@ -158,16 +158,33 @@ public final class KillAnimations {
 	private static boolean tickKneel(ClientWorld w, Anim a, int age) {
 		LivingEntity c = a.clone;
 		if (c != null) {
-			c.setPose(EntityPose.CROUCHING);
-			c.setPitch(Math.min(75f, age * 9f));
+			if (c instanceof PlayerEntity) {
+				// саму позу «на колено» рисует PlayerEntityModelMixin
+				c.setPose(EntityPose.STANDING);
+				c.setPitch(0f);
+			} else {
+				c.setPose(EntityPose.CROUCHING);
+				c.setPitch(Math.min(75f, age * 9f));
+			}
 			c.setHeadYaw(a.yaw);
 			c.setBodyYaw(a.yaw);
 		}
-		if (age >= 36) {
-			poof(w, a.x, a.y + 0.9, a.z);
+		if (age >= 40) {
+			poof(w, a.x, a.y + 0.6, a.z);
 			return true;
 		}
 		return false;
+	}
+
+	/** 0..1: насколько клон-игрок уже опустился на колено (для PlayerEntityModelMixin). */
+	public static float kneelProgress(Entity e, float tickDelta) {
+		for (Anim a : ANIMS) {
+			if (a.kind == Config.KillAnim.KNEEL && a.clone == e) {
+				double u = Math.max(0.0, Math.min(1.0, (tick - a.start - 1 + tickDelta) / 8.0));
+				return (float) (u * u * (3 - 2 * u));
+			}
+		}
+		return 0f;
 	}
 
 	// 2) туалет с ракетой

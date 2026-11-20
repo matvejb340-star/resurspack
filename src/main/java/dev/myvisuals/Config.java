@@ -9,6 +9,7 @@ public final class Config {
 	public static boolean autoApplePlus = false;
 	public static Weather weather = Weather.VANILLA;
 	public static KillAnim killAnim = KillAnim.OFF;
+	public static boolean radar = false;
 
 	// --- настройки рук ---
 	public static double mainScale = 1.0;

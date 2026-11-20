@@ -5,7 +5,10 @@
   "client": [
     "BiomeMixin",
     "WorldMixin",
-    "HeldItemRendererMixin"
+    "HeldItemRendererMixin",
+    "PlayerEntityRenderStateMixin",
+    "PlayerEntityRendererMixin",
+    "PlayerEntityModelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

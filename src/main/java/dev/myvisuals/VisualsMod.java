@@ -3,6 +3,7 @@ package dev.myvisuals;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
@@ -32,7 +33,10 @@ public class VisualsMod implements ClientModInitializer {
 			AutoApple.tick(client);
 			FallingItems.tick(client);
 			KillAnimations.tick(client);
+			Radar.tick(client);
 		});
+
+		HudRenderCallback.EVENT.register((context, tickCounter) -> Radar.render(context));
 
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(TrajectoryRenderer::render);
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(KillAnimations::render);
