@@ -22,6 +22,7 @@ public class VisualsMod implements ClientModInitializer {
 		));
 
 		KillAnimations.register();
+		TargetFx.register();
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (menuKey.wasPressed()) {
@@ -34,11 +35,13 @@ public class VisualsMod implements ClientModInitializer {
 			FallingItems.tick(client);
 			KillAnimations.tick(client);
 			Radar.tick(client);
+			TargetFx.tick(client);
 		});
 
 		HudRenderCallback.EVENT.register((context, tickCounter) -> Radar.render(context));
 
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(TrajectoryRenderer::render);
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(KillAnimations::render);
+		WorldRenderEvents.AFTER_TRANSLUCENT.register(TargetFx::render);
 	}
 }

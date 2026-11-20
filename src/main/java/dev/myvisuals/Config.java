@@ -10,6 +10,7 @@ public final class Config {
 	public static Weather weather = Weather.VANILLA;
 	public static KillAnim killAnim = KillAnim.OFF;
 	public static boolean radar = false;
+	public static TargetFx targetFx = TargetFx.OFF;
 
 	// --- настройки рук ---
 	public static double mainScale = 1.0;
@@ -32,6 +33,7 @@ public final class Config {
 		offY = 0.0;
 		offZ = 0.0;
 		swordAnim = SwordAnim.VANILLA;
+		targetFx = TargetFx.OFF;
 	}
 
 	public enum Weather {
@@ -51,6 +53,24 @@ public final class Config {
 
 		public Weather next() {
 			Weather[] all = values();
+			return all[(ordinal() + 1) % all.length];
+		}
+	}
+
+	public enum TargetFx {
+		OFF("Выключено"),
+		CROSS("Круг с крестом"),
+		WAVE("Волна"),
+		BUBBLES("Пузырьки");
+
+		public final String label;
+
+		TargetFx(String label) {
+			this.label = label;
+		}
+
+		public TargetFx next() {
+			TargetFx[] all = values();
 			return all[(ordinal() + 1) % all.length];
 		}
 	}

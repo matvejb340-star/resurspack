@@ -86,6 +86,7 @@ public class VisualsScreen extends Screen {
 				() -> Config.radar = !Config.radar,
 				"Нажми, чтобы включить или выключить"));
 
+
 		panelW = COLS * (SLOT + GAP) - GAP + PAD * 2;
 		panelH = ROWS * (SLOT + GAP) - GAP + PAD * 2;
 		px = (this.width - panelW) / 2;

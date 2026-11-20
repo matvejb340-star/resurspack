@@ -18,6 +18,10 @@ public class HandsScreen extends Screen {
 		return Text.literal("Анимация меча: " + Config.swordAnim.label);
 	}
 
+	private static Text targetLabel() {
+		return Text.literal("Таргет-анимация: " + Config.targetFx.label);
+	}
+
 	@Override
 	protected void init() {
 		int colW = 150;
@@ -50,8 +54,13 @@ public class HandsScreen extends Screen {
 			this.clearAndInit();
 		}).dimensions(cx + 55, ry, 100, 20).build());
 
+		addDrawableChild(ButtonWidget.builder(targetLabel(), b -> {
+			Config.targetFx = Config.targetFx.next();
+			b.setMessage(targetLabel());
+		}).dimensions(xl, ry + 26, 310, 20).build());
+
 		addDrawableChild(ButtonWidget.builder(Text.literal("Назад"), b -> close())
-				.dimensions(cx - 100, ry + 26, 200, 20).build());
+				.dimensions(cx - 100, ry + 52, 200, 20).build());
 	}
 
 	@Override
