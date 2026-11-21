@@ -36,10 +36,12 @@ public class VisualsMod implements ClientModInitializer {
 			KillAnimations.tick(client);
 			Radar.tick(client);
 			TargetFx.tick(client);
+			KnifeRenderer.tick(client);
 		});
 
 		HudRenderCallback.EVENT.register((context, tickCounter) -> Radar.render(context));
 
+		WorldRenderEvents.AFTER_TRANSLUCENT.register(SkyFx::render);
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(TrajectoryRenderer::render);
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(KillAnimations::render);
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(TargetFx::render);

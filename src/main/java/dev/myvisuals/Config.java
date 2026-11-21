@@ -10,6 +10,8 @@ public final class Config {
 	public static Weather weather = Weather.VANILLA;
 	public static KillAnim killAnim = KillAnim.OFF;
 	public static boolean radar = false;
+	public static SkyMode skyMode = SkyMode.VANILLA;
+	public static SwordSkin swordSkin = SwordSkin.VANILLA;
 	public static TargetFx targetFx = TargetFx.OFF;
 
 	// --- настройки рук ---
@@ -34,6 +36,41 @@ public final class Config {
 		offZ = 0.0;
 		swordAnim = SwordAnim.VANILLA;
 		targetFx = TargetFx.OFF;
+		swordSkin = SwordSkin.VANILLA;
+	}
+
+	public enum SkyMode {
+		VANILLA("Обычное"),
+		AURORA_GREEN("Северное сияние (зелёное)"),
+		AURORA_PURPLE("Северное сияние (фиолетовое)");
+
+		public final String label;
+
+		SkyMode(String label) {
+			this.label = label;
+		}
+
+		public SkyMode next() {
+			SkyMode[] all = values();
+			return all[(ordinal() + 1) % all.length];
+		}
+	}
+
+	public enum SwordSkin {
+		VANILLA("Обычный меч"),
+		M9("Нож M9"),
+		M9_GOLD("Нож M9 золотой");
+
+		public final String label;
+
+		SwordSkin(String label) {
+			this.label = label;
+		}
+
+		public SwordSkin next() {
+			SwordSkin[] all = values();
+			return all[(ordinal() + 1) % all.length];
+		}
 	}
 
 	public enum Weather {

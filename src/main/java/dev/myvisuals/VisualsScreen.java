@@ -70,10 +70,12 @@ public class VisualsScreen extends Screen {
 				"Нажми, чтобы включить или выключить"));
 
 		entries.add(new Entry(15, new ItemStack(Items.WATER_BUCKET), "Погода",
-				() -> Config.weather != Config.Weather.VANILLA,
-				() -> "Режим: " + Config.weather.label,
-				() -> Config.weather = Config.weather.next(),
-				"Нажми, чтобы сменить погоду"));
+				null,
+				() -> "Сейчас: " + Config.weather.label + ", небо: " + Config.skyMode.label,
+				() -> {
+					if (this.client != null) this.client.setScreen(new WeatherScreen(this));
+				},
+				"Нажми, чтобы открыть"));
 
 		entries.add(new Entry(20, new ItemStack(Items.SKELETON_SKULL), "Анимация убийства",
 				() -> Config.killAnim != Config.KillAnim.OFF,

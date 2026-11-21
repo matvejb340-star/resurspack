@@ -12,6 +12,7 @@ import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
@@ -59,8 +60,11 @@ public final class TargetFx {
 	public static void register() {
 		AttackEntityCallback.EVENT.register((player, world, hand, entity, hit) -> {
 			if (world.isClient && entity instanceof LivingEntity le && entity != player) {
+				if (target != le) BUBBLES.clear();
 				target = le;
 				hitTick = tick;
+				// пузырьки появляются только в момент удара
+				if (Config.targetFx == Config.TargetFx.BUBBLES) spawnBubbles(player, le);
 			}
 			return ActionResult.PASS;
 		});
@@ -77,22 +81,38 @@ public final class TargetFx {
 		if (target != null && (target.isRemoved() || !target.isAlive() || tick - hitTick > SHOW_TICKS)) {
 			target = null;
 		}
+		if (target == null) BUBBLES.clear();
 		BUBBLES.removeIf(b -> tick - b.born >= b.life);
+	}
 
-		if (target != null && Config.targetFx == Config.TargetFx.BUBBLES && BUBBLES.size() < 80) {
-			Box bb = target.getBoundingBox();
-			double spread = Math.max(bb.getLengthX(), bb.getLengthZ()) + 0.5;
-			for (int i = 0; i < 2; i++) {
-				double x = bb.getCenter().x + (RNG.nextDouble() - 0.5) * spread;
-				double y = bb.minY + RNG.nextDouble() * bb.getLengthY();
-				double z = bb.getCenter().z + (RNG.nextDouble() - 0.5) * spread;
-				BUBBLES.add(new Bubble(x, y, z,
-						0.03f + RNG.nextFloat() * 0.06f,
-						0.02f + RNG.nextFloat() * 0.025f,
-						RNG.nextFloat() * 6.28f,
-						tick, 18 + RNG.nextInt(22)));
-			}
+	/**
+	 * Пузырьки привязаны к врагу (смещения считаются от его положения) и никуда не летят.
+	 * Они держатся сбоку и сзади от врага, а не между тобой и ним, чтобы не закрывать обзор.
+	 */
+	private static void spawnBubbles(PlayerEntity attacker, LivingEntity t) {
+		Box bb = t.getBoundingBox();
+		double r = Math.max(bb.getLengthX(), bb.getLengthZ()) / 2.0 + 0.3;
+		double toMe = Math.atan2(attacker.getZ() - t.getZ(), attacker.getX() - t.getX());
+
+		for (int i = 0; i < 3 && BUBBLES.size() < 10; i++) {
+			double ang;
+			do {
+				ang = RNG.nextDouble() * Math.PI * 2;
+			} while (Math.abs(angleDiff(ang, toMe)) < 1.1);
+
+			double rr = r * (0.9 + RNG.nextDouble() * 0.4);
+			double oy = RNG.nextDouble() * bb.getLengthY();
+			BUBBLES.add(new Bubble(Math.cos(ang) * rr, oy, Math.sin(ang) * rr,
+					0.03f + RNG.nextFloat() * 0.04f, 0f,
+					RNG.nextFloat() * 6.28f, tick, 24 + RNG.nextInt(14)));
 		}
+	}
+
+	private static double angleDiff(double a, double b) {
+		double d = (a - b) % (Math.PI * 2);
+		if (d > Math.PI) d -= Math.PI * 2;
+		if (d < -Math.PI) d += Math.PI * 2;
+		return d;
 	}
 
 	// ------------------------------------------------------------- отрисовка
@@ -102,7 +122,7 @@ public final class TargetFx {
 		if (mode == Config.TargetFx.OFF) return;
 
 		boolean haveTarget = target != null && (mode == Config.TargetFx.CROSS || mode == Config.TargetFx.WAVE);
-		boolean haveBubbles = mode == Config.TargetFx.BUBBLES && !BUBBLES.isEmpty();
+		boolean haveBubbles = mode == Config.TargetFx.BUBBLES && target != null && !BUBBLES.isEmpty();
 		if (!haveTarget && !haveBubbles) return;
 
 		MatrixStack ms = ctx.matrixStack();
@@ -233,13 +253,15 @@ public final class TargetFx {
 			double age = now - bu.born;
 			if (age < 0) age = 0;
 
-			double x = bu.x + 0.04 * Math.sin(age * 0.3 + bu.phase);
-			double y = bu.y + bu.rise * age;
-			double z = bu.z + 0.04 * Math.cos(age * 0.3 + bu.phase);
+			// следуют за врагом, лишь слегка покачиваясь на месте
+			Vec3d tp = target.getLerpedPos((float) (now - tick));
+			double x = tp.x + bu.x + 0.015 * Math.sin(age * 0.2 + bu.phase);
+			double y = tp.y + bu.y + 0.02 * Math.sin(age * 0.25 + bu.phase * 1.3);
+			double z = tp.z + bu.z + 0.015 * Math.cos(age * 0.2 + bu.phase);
 
 			double fadeIn = Math.min(1.0, age / 3.0);
 			double fadeOut = Math.min(1.0, (bu.life - age) / 4.0);
-			double alpha = Math.max(0.0, Math.min(fadeIn, fadeOut));
+			double alpha = Math.max(0.0, Math.min(fadeIn, fadeOut)) * fadeOut(now);
 			double size = bu.size * (1.0 + 0.2 * age / bu.life) * (bu.life - age < 2 ? 1.35 : 1.0);
 
 			Vec3d c = new Vec3d(x, y, z).subtract(cam);
