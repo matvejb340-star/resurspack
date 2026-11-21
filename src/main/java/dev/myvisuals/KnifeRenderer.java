@@ -23,7 +23,7 @@ public final class KnifeRenderer {
 	private KnifeRenderer() {}
 
 	private static final int DRAW_LEN = 16;
-	private static final int INSPECT_LEN = 44;
+	private static final int INSPECT_LEN = 80;
 
 	private static int drawTicks = DRAW_LEN;
 	private static int inspectTicks = INSPECT_LEN;
@@ -63,6 +63,11 @@ public final class KnifeRenderer {
 		lastUse = use;
 	}
 
+	private static float smooth(float x) {
+		x = Math.max(0f, Math.min(1f, x));
+		return x * x * (3f - 2f * x);
+	}
+
 	// ------------------------------------------------------------------ рисование
 
 	public static void draw(MatrixStack ms, float tickDelta, float swing) {
@@ -84,23 +89,30 @@ public final class KnifeRenderer {
 			ms.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(360f * inv));
 		}
 
-		// осмотр: нож поднимается, вращается и показывает обе стороны
+		// осмотр: нож поднимается, долго показывает обе стороны в середине и опускается
 		if (inspectTicks < INSPECT_LEN) {
 			float t = Math.min(1f, (inspectTicks + tickDelta) / INSPECT_LEN);
-			float lift = (float) Math.sin(Math.PI * t);
-			float ease = t * t * (3f - 2f * t);
+			float lift;
+			if (t < 0.18f) lift = smooth(t / 0.18f);
+			else if (t > 0.82f) lift = smooth((1f - t) / 0.18f);
+			else lift = 1f;
+			float h = Math.max(0f, Math.min(1f, (t - 0.18f) / 0.64f)); // середина
+			float spin = h * h * (3f - 2f * h);
 			ms.translate(-0.30f * lift, 0.10f * lift, 0.22f * lift);
-			ms.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(360f * ease));
-			ms.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(55f * (float) Math.sin(2 * Math.PI * t)));
-			ms.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-25f * lift));
+			ms.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(360f * spin));
+			ms.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(30f * lift + 25f * (float) Math.sin(2 * Math.PI * h) * lift));
+			ms.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-20f * lift));
 		}
 
-		// удар: выпад вперёд и поворот
+		// удар: рубящий взмах по диагонали сверху-справа вниз-влево, как мечом
 		if (swing > 0f) {
-			float s = (float) Math.sin(Math.sqrt(swing) * Math.PI);
-			ms.translate(-0.10f * s, 0.05f * s, -0.45f * s);
-			ms.multiply(RotationAxis.POSITIVE_X.rotationDegrees(25f * s));
-			ms.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(-30f * s));
+			float p = Math.min(1f, swing);
+			float u = 1f - (1f - p) * (1f - p);          // быстрый старт, мягкий конец
+			float d = u * 0.9f - 0.1f;                    // от середины экрана вниз по диагонали
+			float s = (float) Math.sin(Math.PI * p);
+			ms.translate(-0.70f * d, -0.60f * d, -0.18f * s);
+			ms.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(75f * d));
+			ms.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-22f * s));
 		}
 
 		ms.translate(0f, -0.22f, 0f); // центр хвата
