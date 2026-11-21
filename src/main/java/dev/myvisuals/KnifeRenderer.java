@@ -23,7 +23,7 @@ public final class KnifeRenderer {
 	private KnifeRenderer() {}
 
 	private static final int DRAW_LEN = 16;
-	private static final int INSPECT_LEN = 70;
+	private static final int INSPECT_LEN = 90;
 
 	private static int drawTicks = DRAW_LEN;
 	private static int inspectTicks = INSPECT_LEN;
@@ -89,20 +89,11 @@ public final class KnifeRenderer {
 			ms.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(360f * inv));
 		}
 
-		// осмотр: прежняя анимация, но в верхней точке нож надолго замирает
+		// осмотр: прежняя плавная анимация, чуть растянутая по времени
 		if (inspectTicks < INSPECT_LEN) {
 			float t = Math.min(1f, (inspectTicks + tickDelta) / INSPECT_LEN);
-			float k;
-			if (t < 0.30f) {
-				float x = t / 0.30f;
-				k = 0.5f * (1f - (1f - x) * (1f - x));          // плавно к середине
-			} else if (t < 0.70f) {
-				float h = (t - 0.30f) / 0.40f;
-				k = 0.5f + 0.03f * (h - 0.5f);                   // держим положение
-			} else {
-				float x = (t - 0.70f) / 0.30f;
-				k = 0.5f + 0.5f * x * x;                         // возврат
-			}
+			// время течёт медленнее в середине (но не останавливается), быстрее по краям
+			float k = t + 0.8f * (float) Math.sin(2 * Math.PI * t) / (float) (2 * Math.PI);
 			float lift = (float) Math.sin(Math.PI * k);
 			float ease = k * k * (3f - 2f * k);
 			ms.translate(-0.30f * lift, 0.10f * lift, 0.22f * lift);
