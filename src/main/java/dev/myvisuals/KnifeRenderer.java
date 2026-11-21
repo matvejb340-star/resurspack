@@ -23,7 +23,7 @@ public final class KnifeRenderer {
 	private KnifeRenderer() {}
 
 	private static final int DRAW_LEN = 16;
-	private static final int INSPECT_LEN = 80;
+	private static final int INSPECT_LEN = 70;
 
 	private static int drawTicks = DRAW_LEN;
 	private static int inspectTicks = INSPECT_LEN;
@@ -89,30 +89,43 @@ public final class KnifeRenderer {
 			ms.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(360f * inv));
 		}
 
-		// осмотр: нож поднимается, долго показывает обе стороны в середине и опускается
+		// осмотр: прежняя анимация, но в верхней точке нож надолго замирает
 		if (inspectTicks < INSPECT_LEN) {
 			float t = Math.min(1f, (inspectTicks + tickDelta) / INSPECT_LEN);
-			float lift;
-			if (t < 0.18f) lift = smooth(t / 0.18f);
-			else if (t > 0.82f) lift = smooth((1f - t) / 0.18f);
-			else lift = 1f;
-			float h = Math.max(0f, Math.min(1f, (t - 0.18f) / 0.64f)); // середина
-			float spin = h * h * (3f - 2f * h);
+			float k;
+			if (t < 0.30f) {
+				float x = t / 0.30f;
+				k = 0.5f * (1f - (1f - x) * (1f - x));          // плавно к середине
+			} else if (t < 0.70f) {
+				float h = (t - 0.30f) / 0.40f;
+				k = 0.5f + 0.03f * (h - 0.5f);                   // держим положение
+			} else {
+				float x = (t - 0.70f) / 0.30f;
+				k = 0.5f + 0.5f * x * x;                         // возврат
+			}
+			float lift = (float) Math.sin(Math.PI * k);
+			float ease = k * k * (3f - 2f * k);
 			ms.translate(-0.30f * lift, 0.10f * lift, 0.22f * lift);
-			ms.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(360f * spin));
-			ms.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(30f * lift + 25f * (float) Math.sin(2 * Math.PI * h) * lift));
-			ms.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-20f * lift));
+			ms.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(360f * ease));
+			ms.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(55f * (float) Math.sin(2 * Math.PI * k)));
+			ms.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-25f * lift));
 		}
 
-		// удар: рубящий взмах по диагонали сверху-справа вниз-влево, как мечом
+		// удар: из руки к центру экрана, оттуда рубящий взмах по диагонали вправо-вниз и назад на место
 		if (swing > 0f) {
 			float p = Math.min(1f, swing);
-			float u = 1f - (1f - p) * (1f - p);          // быстрый старт, мягкий конец
-			float d = u * 0.9f - 0.1f;                    // от середины экрана вниз по диагонали
+			float a;
+			if (p < 0.35f) {
+				float x = p / 0.35f;
+				a = x * x * (3f - 2f * x);                       // замах к центру
+			} else {
+				float x = (p - 0.35f) / 0.65f;
+				a = 1f - x * x;                                  // быстрый удар обратно
+			}
 			float s = (float) Math.sin(Math.PI * p);
-			ms.translate(-0.70f * d, -0.60f * d, -0.18f * s);
-			ms.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(75f * d));
-			ms.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-22f * s));
+			ms.translate(-0.42f * a, 0.34f * a, -0.12f * s);
+			ms.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(28f * a));
+			ms.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-25f * s));
 		}
 
 		ms.translate(0f, -0.22f, 0f); // центр хвата
