@@ -11,6 +11,7 @@ import org.lwjgl.glfw.GLFW;
 
 public class VisualsMod implements ClientModInitializer {
 	public static KeyBinding menuKey;
+	public static KeyBinding triggerKey;
 
 	@Override
 	public void onInitializeClient() {
@@ -18,6 +19,13 @@ public class VisualsMod implements ClientModInitializer {
 				"key.myvisuals.menu",
 				InputUtil.Type.KEYSYM,
 				GLFW.GLFW_KEY_RIGHT_ALT,
+				"category.myvisuals"
+		));
+
+		triggerKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+				"key.myvisuals.trigger",
+				InputUtil.Type.KEYSYM,
+				GLFW.GLFW_KEY_0,
 				"category.myvisuals"
 		));
 

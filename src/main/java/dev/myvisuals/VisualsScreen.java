@@ -88,6 +88,10 @@ public class VisualsScreen extends Screen {
 				() -> Config.radar = !Config.radar,
 				"Нажми, чтобы включить или выключить"));
 
+		entries.add(new Entry(16, new ItemStack(Items.NETHERITE_SWORD), "Авто-удар (цифра 0)",
+				() -> Config.triggerBot, null,
+				() -> Config.triggerBot = !Config.triggerBot,
+				"Бьёт сам, когда прицел на игроке в зоне досягаемости. Клавиша 0 включает и выключает"));
 
 		panelW = COLS * (SLOT + GAP) - GAP + PAD * 2;
 		panelH = ROWS * (SLOT + GAP) - GAP + PAD * 2;

@@ -10,6 +10,7 @@ public final class Config {
 	public static Weather weather = Weather.VANILLA;
 	public static KillAnim killAnim = KillAnim.OFF;
 	public static boolean radar = false;
+	public static boolean triggerBot = false;
 	public static SkyMode skyMode = SkyMode.VANILLA;
 	public static SwordSkin swordSkin = SwordSkin.VANILLA;
 	public static TargetFx targetFx = TargetFx.OFF;

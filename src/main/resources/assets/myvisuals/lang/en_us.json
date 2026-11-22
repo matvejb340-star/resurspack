@@ -1,4 +1,5 @@
 {
   "key.myvisuals.menu": "Открыть меню визуала",
-  "category.myvisuals": "My Visuals"
+  "category.myvisuals": "My Visuals",
+  "key.myvisuals.trigger": "Auto attack toggle"
 }
