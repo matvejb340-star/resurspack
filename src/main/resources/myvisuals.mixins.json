@@ -8,8 +8,7 @@
     "HeldItemRendererMixin",
     "PlayerEntityRenderStateMixin",
     "PlayerEntityRendererMixin",
-    "PlayerEntityModelMixin",
-    "ArrowRendererMixin"
+    "PlayerEntityModelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

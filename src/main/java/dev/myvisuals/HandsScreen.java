@@ -26,10 +26,6 @@ public class HandsScreen extends Screen {
 		return Text.literal("Модель лука: " + Config.bowSkin.label);
 	}
 
-	private static Text arrowLabel() {
-		return Text.literal("Стрела: " + Config.arrowSkin.label);
-	}
-
 	private static Text targetLabel() {
 		return Text.literal("Таргет-анимация: " + Config.targetFx.label);
 	}
@@ -40,7 +36,7 @@ public class HandsScreen extends Screen {
 		int cx = this.width / 2;
 		int xl = cx - 155;
 		int xr = cx + 5;
-		int y0 = this.height / 2 - 126;
+		int y0 = this.height / 2 - 113;
 		int sy = y0 + 30;
 
 		// основная рука
@@ -81,13 +77,8 @@ public class HandsScreen extends Screen {
 			b.setMessage(bowLabel());
 		}).dimensions(xl, ry + 78, 310, 20).build());
 
-		addDrawableChild(ButtonWidget.builder(arrowLabel(), b -> {
-			Config.arrowSkin = Config.arrowSkin.next();
-			b.setMessage(arrowLabel());
-		}).dimensions(xl, ry + 104, 310, 20).build());
-
 		addDrawableChild(ButtonWidget.builder(Text.literal("Назад"), b -> close())
-				.dimensions(cx - 100, ry + 130, 200, 20).build());
+				.dimensions(cx - 100, ry + 104, 200, 20).build());
 	}
 
 	@Override
@@ -99,7 +90,7 @@ public class HandsScreen extends Screen {
 	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
 		super.render(context, mouseX, mouseY, delta);
 		int cx = this.width / 2;
-		int y0 = this.height / 2 - 126;
+		int y0 = this.height / 2 - 113;
 		context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("Руки и анимация меча"), cx, y0, 0xFFFFFFFF);
 		context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("Основная рука"), cx - 80, y0 + 16, 0xFFFFFFFF);
 		context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("Вторая рука"), cx + 80, y0 + 16, 0xFFFFFFFF);
