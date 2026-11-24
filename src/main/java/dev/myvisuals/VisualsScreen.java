@@ -93,6 +93,11 @@ public class VisualsScreen extends Screen {
 				() -> Config.triggerBot = !Config.triggerBot,
 				"Бьёт сам, когда прицел на игроке в зоне досягаемости. Клавиша 0 включает и выключает"));
 
+		entries.add(new Entry(17, new ItemStack(Items.FIREWORK_ROCKET), "Фейерверк при падении врага",
+				() -> Config.voidFirework, null,
+				() -> Config.voidFirework = !Config.voidFirework,
+				"Если враг упал в бездну, от него взлетает фейерверк"));
+
 		panelW = COLS * (SLOT + GAP) - GAP + PAD * 2;
 		panelH = ROWS * (SLOT + GAP) - GAP + PAD * 2;
 		px = (this.width - panelW) / 2;

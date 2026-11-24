@@ -13,6 +13,8 @@ public final class Config {
 	public static boolean triggerBot = false;
 	public static SkyMode skyMode = SkyMode.VANILLA;
 	public static SwordSkin swordSkin = SwordSkin.VANILLA;
+	public static BowSkin bowSkin = BowSkin.VANILLA;
+	public static boolean voidFirework = true;
 	public static TargetFx targetFx = TargetFx.OFF;
 
 	// --- настройки рук ---
@@ -38,6 +40,7 @@ public final class Config {
 		swordAnim = SwordAnim.VANILLA;
 		targetFx = TargetFx.OFF;
 		swordSkin = SwordSkin.VANILLA;
+		bowSkin = BowSkin.VANILLA;
 	}
 
 	public enum SkyMode {
@@ -53,6 +56,22 @@ public final class Config {
 
 		public SkyMode next() {
 			SkyMode[] all = values();
+			return all[(ordinal() + 1) % all.length];
+		}
+	}
+
+	public enum BowSkin {
+		VANILLA("Обычный лук"),
+		RPG("РПГ");
+
+		public final String label;
+
+		BowSkin(String label) {
+			this.label = label;
+		}
+
+		public BowSkin next() {
+			BowSkin[] all = values();
 			return all[(ordinal() + 1) % all.length];
 		}
 	}

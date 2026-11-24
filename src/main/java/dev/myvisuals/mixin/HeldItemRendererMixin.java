@@ -2,6 +2,7 @@ package dev.myvisuals.mixin;
 
 import dev.myvisuals.HandTransforms;
 import dev.myvisuals.KnifeRenderer;
+import dev.myvisuals.RpgRenderer;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.item.HeldItemRenderer;
@@ -29,6 +30,13 @@ public abstract class HeldItemRendererMixin {
 		// нож M9 вместо меча
 		if (hand == Hand.MAIN_HAND && KnifeRenderer.active(item)) {
 			KnifeRenderer.draw(matrices, tickDelta, swingProgress);
+			ci.cancel();
+			return;
+		}
+
+		// РПГ вместо лука
+		if (hand == Hand.MAIN_HAND && RpgRenderer.active(item)) {
+			RpgRenderer.draw(matrices, player, tickDelta, equipProgress);
 			ci.cancel();
 			return;
 		}

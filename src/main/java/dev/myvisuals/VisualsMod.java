@@ -47,6 +47,7 @@ public class VisualsMod implements ClientModInitializer {
 			Radar.tick(client);
 			TargetFx.tick(client);
 			KnifeRenderer.tick(client);
+			VoidFireworks.tick(client);
 		});
 
 		HudRenderCallback.EVENT.register((context, tickCounter) -> {

@@ -138,90 +138,120 @@ public final class KnifeRenderer {
 
 	// ----------------------------------------------------------------- геометрия
 
-	/** Нож: ручка по оси Y снизу вверх, затем гарда и клинок. Размеры в блоках. */
+	private static float smoothstep(float x) {
+		x = Math.max(0f, Math.min(1f, x));
+		return x * x * (3f - 2f * x);
+	}
+
+	/** Штык-нож M9: клинок с долом и скосом, рифлёная ручка, кольцо и гарда. Ось ножа — Y. */
 	private static void buildKnife(BufferBuilder b, Matrix4f m, boolean gold) {
-		int[] steel = gold ? new int[]{246, 205, 70} : new int[]{196, 202, 214};
-		int[] steelDark = gold ? new int[]{205, 155, 35} : new int[]{120, 128, 142};
-		int[] steelEdge = gold ? new int[]{255, 236, 150} : new int[]{235, 240, 248};
-		int[] grip = gold ? new int[]{70, 45, 20} : new int[]{34, 34, 40};
-		int[] gripLine = gold ? new int[]{110, 75, 30} : new int[]{58, 58, 66};
-		int[] metal = gold ? new int[]{225, 175, 55} : new int[]{88, 92, 104};
+		int[] steel = gold ? new int[]{232, 184, 58} : new int[]{150, 156, 166};
+		int[] steelEdge = gold ? new int[]{255, 232, 140} : new int[]{205, 210, 220};
+		int[] steelDark = gold ? new int[]{170, 120, 28} : new int[]{86, 92, 102};
+		int[] grip = gold ? new int[]{92, 62, 22} : new int[]{44, 46, 52};
+		int[] gripHi = gold ? new int[]{150, 105, 40} : new int[]{74, 77, 86};
+		int[] metal = gold ? new int[]{214, 160, 44} : new int[]{66, 70, 80};
 
-		float w = 0.030f; // полутолщина ручки
-
-		// набалдашник и ручка с рифлением
-		box(b, m, -w - 0.006f, -0.020f, -w - 0.004f, w + 0.006f, 0.000f, w + 0.004f, metal);
-		box(b, m, -w, 0.000f, -w, w, 0.250f, w, grip);
-		for (int i = 0; i < 7; i++) {
-			float y = 0.025f + i * 0.032f;
-			box(b, m, -w - 0.003f, y, -w - 0.003f, w + 0.003f, y + 0.011f, w + 0.003f, gripLine);
+		// ручка: колпачок, четыре рифлёных секции, воротник
+		float[][] handle = {
+				{-0.036f, 0.000f}, {-0.036f, 0.029f}, {-0.031f, 0.034f}, {-0.004f, 0.034f},
+				{0.000f, 0.030f}, {0.008f, 0.024f}
+		};
+		lathe(b, m, handle, 18, metal, 0.9f);
+		for (int k = 0; k < 4; k++) {
+			float y = 0.016f + k * 0.054f;
+			float[][] ring = {
+					{y, 0.024f}, {y + 0.004f, 0.029f}, {y + 0.010f, 0.0315f}, {y + 0.038f, 0.0315f},
+					{y + 0.044f, 0.029f}, {y + 0.048f, 0.024f}
+			};
+			lathe(b, m, ring, 18, (k % 2 == 0) ? grip : gripHi, 0.45f);
 		}
-		// кольцо у основания (как у штык-ножа)
-		box(b, m, -w - 0.004f, 0.236f, -w - 0.004f, w + 0.004f, 0.256f, w + 0.004f, metal);
+		float[][] collar = {
+				{0.232f, 0.024f}, {0.236f, 0.031f}, {0.262f, 0.031f}, {0.268f, 0.026f}, {0.274f, 0.000f}
+		};
+		lathe(b, m, collar, 18, metal, 0.9f);
 
-		// гарда с кольцом под ствол
-		box(b, m, -0.085f, 0.256f, -0.020f, 0.040f, 0.282f, 0.020f, metal);
-		box(b, m, -0.088f, 0.250f, -0.026f, -0.060f, 0.292f, 0.026f, metal);
+		// гарда и кольцо под ствол
+		box(b, m, -0.072f, 0.256f, -0.017f, 0.034f, 0.276f, 0.017f, metal, 0.9f);
+		box(b, m, 0.028f, 0.226f, -0.020f, 0.044f, 0.304f, 0.020f, metal, 0.9f);
+		ModelKit.torusZ(b, m, -0.088f, 0.262f, 0.0f, 0.026f, 0.0065f, 20, 8, metal, 0.9f);
 
-		// клинок: ступенчатое сужение + заточенный скос (clip point)
-		float y0 = 0.282f;
-		float len = 0.500f;
-		int steps = 18;
-		for (int i = 0; i < steps; i++) {
-			float t0 = i / (float) steps;
-			float t1 = (i + 1) / (float) steps;
-			float ya = y0 + len * t0;
-			float yb = y0 + len * t1;
+		blade(b, m, 0.276f, 0.500f, steel, steelEdge, steelDark);
+	}
 
-			// ширина клинка (по X): постоянная, затем острый скос к концу
-			float half = t0 < 0.58f ? 0.036f : 0.036f * (1f - (t0 - 0.58f) / 0.42f);
-			half = Math.max(half, 0.004f);
-			float spine = 0.0095f - 0.0035f * t0; // толщина (по Z)
+	private static void lathe(BufferBuilder b, Matrix4f m, float[][] prof, int seg, int[] c, float gloss) {
+		ModelKit.lathe(b, m, prof, seg, 0f, 0f, c, gloss);
+	}
 
-			// обух слева (X-), лезвие справа (X+)
-			box(b, m, -half, ya, -spine, half, yb, spine, steel);
-			// заточенная кромка справа
-			box(b, m, half * 0.35f, ya, -spine * 0.55f, half, yb, spine * 0.55f, steelEdge);
-			// канавка (долы) по центру
-			if (t0 > 0.05f && t0 < 0.62f) {
-				box(b, m, -half * 0.45f, ya, spine * 0.98f, half * 0.10f, yb, spine * 1.05f, steelDark);
-				box(b, m, -half * 0.45f, ya, -spine * 1.05f, half * 0.10f, yb, -spine * 0.98f, steelDark);
+	private static void box(BufferBuilder b, Matrix4f m, float x0, float y0, float z0,
+							float x1, float y1, float z1, int[] c, float gloss) {
+		ModelKit.box(b, m, x0, y0, z0, x1, y1, z1, c, gloss);
+	}
+
+	/** Клинок: сечение с долами и фасками, скос обуха (clip point) и «пила» на обухе. */
+	private static void blade(BufferBuilder b, Matrix4f m, float y0, float len,
+							  int[] steel, int[] edgeC, int[] dark) {
+		final int N = 46;
+		final float hw = 0.040f;      // полуширина
+		final float t0 = 0.0105f;     // полутолщина
+		final float tipX = 0.35f;     // положение кончика (доля ширины)
+
+		// доли ширины и множители толщины точек сечения: A F1 F2 F3 F4 S1 E
+		final float[] F = {0f, 0.10f, 0.18f, 0.44f, 0.52f, 0.66f, 1f};
+		final float[] T = {1f, 1f, 0f, 0f, 1f, 0.78f, 0f}; // F2, F3 зависят от глубины дола
+
+		float[][][] pts = new float[N + 1][13][3];
+		float[] ctrY = new float[N + 1];
+		float[] ctrX = new float[N + 1];
+
+		for (int i = 0; i <= N; i++) {
+			float u = i / (float) N;
+			float y = y0 + len * u;
+
+			// обух (xs) и лезвие (xe)
+			float v = Math.max(0f, (u - 0.58f) / 0.42f);
+			float tip = (tipX * 2f - 1f) * hw;
+			float xs = -hw + (tip + hw) * (float) Math.pow(v, 2.2);
+			float xe = hw + (tip - hw) * (float) Math.pow(v, 3.0);
+			float ts = Math.max(0.10f, 1f - 0.85f * v * v);
+
+			float depth = 0.42f * smoothstep(Math.min(u - 0.03f, 0.64f - u) / 0.09f);
+
+			for (int j = 0; j < 13; j++) {
+				int src = j <= 6 ? j : 12 - j;
+				float sign = j <= 6 ? 1f : -1f;
+				float th = T[src];
+				if (src == 2 || src == 3) th = 1f - depth;
+				float x = xs + (xe - xs) * F[src];
+				float z = sign * t0 * ts * th;
+				pts[i][j][0] = x;
+				pts[i][j][1] = y;
+				pts[i][j][2] = z;
+			}
+			ctrX[i] = (xs + xe) / 2f;
+			ctrY[i] = y;
+		}
+
+		for (int i = 0; i < N; i++) {
+			float[] ctr = {(ctrX[i] + ctrX[i + 1]) / 2f, (ctrY[i] + ctrY[i + 1]) / 2f, 0f};
+			for (int j = 0; j < 13; j++) {
+				int j2 = (j + 1) % 13;
+				int[] col;
+				if (j == 5 || j == 6) col = edgeC;           // заточенные фаски
+				else if (j == 12) col = dark;                // обух
+				else if (j == 1 || j == 2 || j == 3 || j == 8 || j == 9 || j == 10) col = dark;  // дол
+				else col = steel;
+				ModelKit.quadFlat(b, m, pts[i][j], pts[i][j2], pts[i + 1][j2], pts[i + 1][j],
+						ctr, col, 1.0f);
 			}
 		}
-		// «зубья» на обухе у основания
-		for (int i = 0; i < 4; i++) {
-			float y = y0 + 0.06f + i * 0.035f;
-			box(b, m, -0.042f, y, -0.006f, -0.034f, y + 0.014f, 0.006f, steelDark);
+
+		// пила на обухе
+		for (int k = 0; k < 6; k++) {
+			float y = y0 + 0.035f + k * 0.036f;
+			box(b, m, -hw - 0.011f, y, -0.0075f, -hw + 0.001f, y + 0.017f, 0.0075f, dark, 0.8f);
 		}
-	}
-
-	/** Коробка с имитацией освещения: у каждой грани своя яркость. */
-	private static void box(BufferBuilder b, Matrix4f m,
-							float x0, float y0, float z0, float x1, float y1, float z1, int[] c) {
-		// верх
-		quad(b, m, x0, y1, z0, x1, y1, z0, x1, y1, z1, x0, y1, z1, c, 1.00f);
-		// низ
-		quad(b, m, x0, y0, z1, x1, y0, z1, x1, y0, z0, x0, y0, z0, c, 0.55f);
-		// передняя (+Z)
-		quad(b, m, x0, y0, z1, x1, y0, z1, x1, y1, z1, x0, y1, z1, c, 0.92f);
-		// задняя (-Z)
-		quad(b, m, x1, y0, z0, x0, y0, z0, x0, y1, z0, x1, y1, z0, c, 0.70f);
-		// правая (+X)
-		quad(b, m, x1, y0, z1, x1, y0, z0, x1, y1, z0, x1, y1, z1, c, 0.82f);
-		// левая (-X)
-		quad(b, m, x0, y0, z0, x0, y0, z1, x0, y1, z1, x0, y1, z0, c, 0.62f);
-	}
-
-	private static void quad(BufferBuilder b, Matrix4f m,
-							 float ax, float ay, float az, float bx, float by, float bz,
-							 float cx, float cy, float cz, float dx, float dy, float dz,
-							 int[] c, float shade) {
-		int r = Math.min(255, (int) (c[0] * shade));
-		int g = Math.min(255, (int) (c[1] * shade));
-		int bl = Math.min(255, (int) (c[2] * shade));
-		b.vertex(m, ax, ay, az).color(r, g, bl, 255);
-		b.vertex(m, bx, by, bz).color(r, g, bl, 255);
-		b.vertex(m, cx, cy, cz).color(r, g, bl, 255);
-		b.vertex(m, dx, dy, dz).color(r, g, bl, 255);
+		// клеймо у основания
+		box(b, m, -hw * 0.55f, y0, t0 * 1.02f, hw * 0.4f, y0 + 0.07f, t0 * 1.02f + 0.0008f, edgeC, 0.6f);
 	}
 }
