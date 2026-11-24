@@ -88,11 +88,6 @@ public class VisualsScreen extends Screen {
 				() -> Config.radar = !Config.radar,
 				"Нажми, чтобы включить или выключить"));
 
-		entries.add(new Entry(16, new ItemStack(Items.NETHERITE_SWORD), "Авто-удар (цифра 0)",
-				() -> Config.triggerBot, null,
-				() -> Config.triggerBot = !Config.triggerBot,
-				"Бьёт сам, когда прицел на игроке в зоне досягаемости. Клавиша 0 включает и выключает"));
-
 		entries.add(new Entry(17, new ItemStack(Items.FIREWORK_ROCKET), "Фейерверк при падении врага",
 				() -> Config.voidFirework, null,
 				() -> Config.voidFirework = !Config.voidFirework,

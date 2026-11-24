@@ -120,6 +120,7 @@ public final class KnifeRenderer {
 		}
 
 		ms.translate(0f, -0.22f, 0f); // центр хвата
+		ms.scale(-1f, 1f, 1f);        // кольцо и зубцы смотрят вправо
 		Matrix4f m = ms.peek().getPositionMatrix();
 
 		RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
@@ -158,6 +159,9 @@ public final class KnifeRenderer {
 				{0.000f, 0.030f}, {0.008f, 0.024f}
 		};
 		lathe(b, m, handle, 18, metal, 0.9f);
+		// сердцевина рукояти, чтобы между секциями не было пустоты
+		float[][] core = {{0.004f, 0.0245f}, {0.262f, 0.0245f}};
+		lathe(b, m, core, 18, grip, 0.45f);
 		for (int k = 0; k < 4; k++) {
 			float y = 0.016f + k * 0.054f;
 			float[][] ring = {

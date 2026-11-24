@@ -11,7 +11,6 @@ import org.lwjgl.glfw.GLFW;
 
 public class VisualsMod implements ClientModInitializer {
 	public static KeyBinding menuKey;
-	public static KeyBinding triggerKey;
 
 	@Override
 	public void onInitializeClient() {
@@ -19,13 +18,6 @@ public class VisualsMod implements ClientModInitializer {
 				"key.myvisuals.menu",
 				InputUtil.Type.KEYSYM,
 				GLFW.GLFW_KEY_RIGHT_ALT,
-				"category.myvisuals"
-		));
-
-		triggerKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-				"key.myvisuals.trigger",
-				InputUtil.Type.KEYSYM,
-				GLFW.GLFW_KEY_0,
 				"category.myvisuals"
 		));
 
@@ -38,8 +30,6 @@ public class VisualsMod implements ClientModInitializer {
 					client.setScreen(new VisualsScreen());
 				}
 			}
-			while (triggerKey.wasPressed()) { /* очередь очищаем, клавиша читается в TriggerBot */ }
-			TriggerBot.tick(client);
 			BridgeAssist.tick(client);
 			AutoApple.tick(client);
 			FallingItems.tick(client);
@@ -50,10 +40,7 @@ public class VisualsMod implements ClientModInitializer {
 			VoidFireworks.tick(client);
 		});
 
-		HudRenderCallback.EVENT.register((context, tickCounter) -> {
-			Radar.render(context);
-			TriggerBot.render(context);
-		});
+		HudRenderCallback.EVENT.register((context, tickCounter) -> Radar.render(context));
 
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(SkyFx::render);
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(TrajectoryRenderer::render);

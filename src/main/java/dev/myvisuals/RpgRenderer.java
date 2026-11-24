@@ -26,7 +26,7 @@ public final class RpgRenderer {
 		ms.push();
 
 		// на плече справа, дулом вперёд; при доставании выезжает снизу
-		ms.translate(0.46f, -0.34f - 0.55f * equip, -0.30f);
+		ms.translate(0.44f, -0.10f - 0.65f * equip, -0.36f);
 
 		// натяжение: РПГ поднимается к прицелу
 		float aim = 0f;
@@ -54,6 +54,57 @@ public final class RpgRenderer {
 
 		RenderSystem.enableCull();
 		ms.pop();
+	}
+
+	/** Боеголовка вместо стрелы в полёте. yaw/pitch — как у обычной стрелы. */
+	public static void drawRocket(MatrixStack ms, float yaw, float pitch) {
+		ms.push();
+		ms.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(yaw - 90.0f));
+		ms.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(pitch));
+		ms.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(-90.0f)); // ось модели Y -> по полёту (+X)
+		ms.scale(0.75f, 0.75f, 0.75f);
+		ms.translate(0f, -0.58f, 0f);
+		Matrix4f m = ms.peek().getPositionMatrix();
+
+		RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
+		RenderSystem.disableBlend();
+		RenderSystem.disableCull();
+		RenderSystem.enableDepthTest();
+
+		BufferBuilder b = Tessellator.getInstance()
+				.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+		buildRocket(b, m);
+		BufferRenderer.drawWithGlobalProgram(b.end());
+
+		RenderSystem.enableCull();
+		ms.pop();
+	}
+
+	private static void buildRocket(BufferBuilder b, Matrix4f m) {
+		int[] olive = {92, 100, 78};
+		int[] black = {38, 40, 44};
+		int[] grn = {96, 175, 58};
+		int[] grnDark = {58, 120, 36};
+		int[] red = {190, 60, 40};
+
+		float[][] body = {
+				{0.28f, 0.0f}, {0.28f, 0.030f}, {0.32f, 0.034f}, {0.50f, 0.034f}, {0.60f, 0.034f}
+		};
+		ModelKit.lathe(b, m, body, 16, 0f, 0f, olive, 0.55f);
+		float[][] warhead = {
+				{0.590f, 0.030f}, {0.610f, 0.050f}, {0.640f, 0.066f}, {0.680f, 0.074f},
+				{0.730f, 0.072f}, {0.775f, 0.060f}, {0.815f, 0.042f}, {0.850f, 0.022f},
+				{0.872f, 0.000f}
+		};
+		ModelKit.lathe(b, m, warhead, 20, 0f, 0f, grn, 0.75f);
+		float[][] belt = {{0.672f, 0.0735f}, {0.676f, 0.0775f}, {0.698f, 0.0775f}, {0.702f, 0.0735f}};
+		ModelKit.lathe(b, m, belt, 20, 0f, 0f, grnDark, 0.5f);
+		float[][] stripe = {{0.724f, 0.0725f}, {0.727f, 0.0755f}, {0.740f, 0.0755f}, {0.743f, 0.0715f}};
+		ModelKit.lathe(b, m, stripe, 20, 0f, 0f, red, 0.5f);
+
+		// стабилизаторы
+		ModelKit.box(b, m, -0.075f, 0.28f, -0.004f, 0.075f, 0.40f, 0.004f, black, 0.6f);
+		ModelKit.box(b, m, -0.004f, 0.28f, -0.075f, 0.004f, 0.40f, 0.075f, black, 0.6f);
 	}
 
 	private static void build(BufferBuilder b, Matrix4f m) {

@@ -10,10 +10,10 @@ public final class Config {
 	public static Weather weather = Weather.VANILLA;
 	public static KillAnim killAnim = KillAnim.OFF;
 	public static boolean radar = false;
-	public static boolean triggerBot = false;
 	public static SkyMode skyMode = SkyMode.VANILLA;
 	public static SwordSkin swordSkin = SwordSkin.VANILLA;
 	public static BowSkin bowSkin = BowSkin.VANILLA;
+	public static ArrowSkin arrowSkin = ArrowSkin.VANILLA;
 	public static boolean voidFirework = true;
 	public static TargetFx targetFx = TargetFx.OFF;
 
@@ -41,6 +41,7 @@ public final class Config {
 		targetFx = TargetFx.OFF;
 		swordSkin = SwordSkin.VANILLA;
 		bowSkin = BowSkin.VANILLA;
+		arrowSkin = ArrowSkin.VANILLA;
 	}
 
 	public enum SkyMode {
@@ -56,6 +57,22 @@ public final class Config {
 
 		public SkyMode next() {
 			SkyMode[] all = values();
+			return all[(ordinal() + 1) % all.length];
+		}
+	}
+
+	public enum ArrowSkin {
+		VANILLA("Обычная стрела"),
+		WARHEAD("Боеголовка");
+
+		public final String label;
+
+		ArrowSkin(String label) {
+			this.label = label;
+		}
+
+		public ArrowSkin next() {
+			ArrowSkin[] all = values();
 			return all[(ordinal() + 1) % all.length];
 		}
 	}
